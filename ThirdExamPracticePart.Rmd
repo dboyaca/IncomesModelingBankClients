@@ -1,0 +1,215 @@
+---
+title: "Parte práctica tercer exámen parcial"
+author: 
+- Diego Boyacá Fuquen
+- Email dboyaca@unal.edu.co
+- Diego Alejandro Pedraza
+- Email dpedraza@unal.edu.co
+output: html_document
+date: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Distribución de ingresos por género
+
+El propósito de esta sección es responder a la siguiente pregunta: ¿Existen diferencias significativas entre el ingreso promedio de hombres y mujeres?
+
+Para ello, comenzaremos por establecer el directorio de trabajo en el cual se encontrará alojado el archivo que contiene la base de datos y el documento de RMarkdown.
+
+```{r}
+#establecer directorio de trabajo
+setwd(dir = "./")
+#importar datos
+creditos <- read.delim("creditos.txt")
+#dimensión de la base de datos
+dim(creditos)
+```
+
+Procedemos ahora a dejar únicamente los registros que contengan información completa para las siguientes columnas: ingresos, género y monto otorgado (para propósitos de análisis, sería útil también contar con el nivel de estudios y estrato). 
+
+
+```{r}
+#base de datos con los registros que cumplen los requisitos establecidos
+creditos <- creditos[,c("INGRESOS_DECLARADOS_TOTA", "SEXO", "MONTO_TOTAL_OTORGADO", "NIVEL_ESTUDIOS", "ESTRATOS")]
+#elimina filas con datos incompletos
+creditos <- creditos[complete.cases(creditos),]
+dim(creditos)
+```
+
+```{r}
+head(creditos, 5)
+```
+Con el propósito de mejorar la legibilidad, se cambiará el nombre de las columnas y se transformará la escala de medición de ingresos y monto otorgado dividiéndola entre **1.000.000**. De esta manera, ambas variables quedarán en la escala de millones. 
+
+```{r}
+#renombramos las columnas en su respectivo orden
+colnames(creditos) <- c("ingresos", "genero", "monto", "estudios", "estrato")
+#accedemos a la columna ingresos y le asignamos sus valores divididos en un millón
+creditos$ingresos <- creditos$ingresos*1.0/1000000
+creditos$monto <- creditos$monto*1.0/1000000
+```
+
+Dado que se quiere estudiar si existe una brecha entre los ingresos de las mujeres y los hombres adscritos al banco y que se les han otorgado **montos inferiores** a **100.000.000**, realizamos la correspondiente depuración. Adicionalmente, en este estudio se descartarán los clientes que tengan **ingresos superiores** a **25 millones** de pesos. 
+
+```{r}
+creditos <- creditos[ (creditos$monto < 100) & (creditos$ingresos < 25),]
+head(creditos,5)
+```
+Siendo así, el número de registros de la base de datos se reduce a:
+```{r}
+nrow(creditos)
+```
+
+
+### Análisis exploratorio de los datos
+
+Se procede a visualizar, por medio de histogramas y diagramas de caja, la manera en la cual se distribuyen los ingresos de los hombres y las mujeres.
+
+```{r}
+#creación de dos arreglos correspondientes a los ingresos de hombres y mujeres por separado
+ingresos_hombres <- creditos$ingresos[creditos$genero=="H"]
+ingresos_mujeres <- creditos$ingresos[creditos$genero=="M"]
+
+#numero de hombres y mujeres en el estudio
+(length(ingresos_hombres))
+(length(ingresos_mujeres))
+```
+Se observa que el número de hombres y mujeres en el estudio es de 36311 y 25534 respectivamente.La suma de los dos anteriores valores es 61845, el cual corresponde efectivamente al número de registros una vez depurada la base de datos.
+
+Empezaremos realizando los histogramas correspondientes.
+
+```{r}
+#visualización
+par(mfrow = c(1,2))
+hist(x = ingresos_mujeres, freq = F, col = "white", ylim = c(0, 0.25),xlab = "Ingresos mujeres (millones)", ylab = "Densidad", main = "")
+
+hist(x = ingresos_hombres, freq = F, col = "white", ylim = c(0, 0.25), xlab = "Ingresos hombres (millones)", ylab = "Densidad", main = "")
+
+```
+
+Continuamos graficando los diagramas de caja.
+
+```{r}
+#visualización diagramas de caja
+par(mfrow = c(1,2))
+
+boxplot(x = ingresos_mujeres, ylab = "Ingresos", xlab = "Mujeres")
+boxplot(x = ingresos_hombres, ylab = "Ingresos", xlab = "Hombres")
+
+```
+
+Por último, antes de realizar el respectivo análisis, obtenemos un resumen de las medidas de tendencia central tanto para el ingreso de los hombres así como el de las mujeres.
+
+```{r}
+#Resumen medidas tendencia central ingresos mujeres
+(summary(ingresos_mujeres))
+```
+```{r}
+#Resumen medidas tendencia central ingresos hombres
+(summary(ingresos_hombres))
+```
+
+### Modelo Log-Normal
+
+Dado que los ingresos de una población son de naturaleza sesgada, el modelo Log Normal aparece como una alternativa víable para modelarlos. Esto último debido a la posibilidad que tiene este de producir distribuciones con diferentes alternativas de sesgo.
+
+Considere el modelo LogNormal de la forma:
+
+$$
+Y_{i} \overset{\mathrm{iid}}{\sim} LogNormal(\mu, \sigma^2)\\
+i = 1, \ldots , n
+$$
+  donde $Y_{i}$ corresponde a los ingresos del i-ésimo individuo y n es el tamaño de la muestra. Dese cuenta que en este caso $Y_{i} \sim LogNormal(\mu, \sigma^2)$ significa que $log Y_{i} \sim Normal(\mu, \sigma^2)$, en donde $-\infty \lt \mu < \infty$ y $\sigma^2 \gt 0$ son los parámetros del modelo de los cuales se pretende hacer inferencia.
+  
+1. En primera medida, mostraremos que los estimadores de máxima verosimilitud de \mu y \sigma^2 son:
+
+$$
+\widehat{\mu}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \log Y_{i} 
+\quad \quad \text{y} \quad \quad 
+\widehat{\sigma^2}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \left( \log Y_{i} - \widehat{\mu}_{\text{MLE}} \right)^2
+$$
+Comenzamos obteniendo la función verosimilitud de la distribución normal, la cual debe ser objeto de maximización.
+$$
+\begin{align*}
+L(\mu,\sigma^2) &= \prod_{i=1}^n f_{Y}(y_i;\mu,\sigma^2) \\
+&= \prod_{i=1}^n (2\pi\sigma^2 y^2)^{-1/2} \,\exp{\left(-\tfrac{1}{2\sigma^2}(\log y_i-\mu)^2\right)} I_{(0,\infty)}(y_i) \\
+&= (2\pi\sigma^2)^{-n/2} \,\exp{\left(-\tfrac{1}{2\sigma^2}\textstyle\sum_{i=1}^n(y_i-\mu)^2\right)} \prod_{i=1}^n \frac{1}{y_{i}}I_{(0. \infty)}(y_i)
+\end{align*}
+$$
+Para que el  proceso de optimización de la función verosimilud sea más sencillo, vamos a hacer uso de la función log-verosimitud.
+
+$$
+\begin{align*}
+\ell(\mu, \sigma^2) &= -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum(\log y_i - \mu)^2 + \log\prod_{i=1}^n \frac{1}{y_i} \\
+&= -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum(\log y_i - \mu)^2 + \sum \log y_{i}^{-1} \\
+&= -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum(\log y_i - \mu)^2 - \sum \log y_{i}\\
+&= -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum(\log y_i - \mu)^2 - c 
+\quad\because\,\, c=\sum \log y_{i}
+\end{align*}
+$$
+Una vez construida la función log-versimilitud, comenzamos el proceso de maximización. Así, derivando parcialmente $\ell(\mu, \sigma^2)$ con respecto a $\mu$ se tiene que:
+
+$$
+\begin{align*}
+\frac{\partial}{\partial\mu} \ell(\mu, \sigma^2) &= -\frac{1}{2\sigma^2}\sum\frac{\partial}{\partial\mu}(\log y_i - \mu)^2 &
+\quad\because\,\, \text{Derivada de una suma, suma de las derivadas} \\
+&= \frac{1}{\sigma^2}\sum(\log y_i - \mu) \quad\quad\quad\quad\quad &(1)
+\end{align*}
+$$
+Igualamos a 0 para encontrar el o los puntos críticos:
+
+$$
+\begin{align*}
+\frac{1}{\sigma^2}\sum(\log y_i - \mu) &= 0 \\
+\sum\log y_i - n\mu = 0 \\
+\therefore \mu = \frac{\sum\log y_i}{n}
+\end{align*}
+$$
+
+Procedemos ahora, mediante el criterio de la segunda derivada , a verificar que este punto crítico corresponde a un máximo ($\frac{\partial^2}{\partial\mu^2}\ell(\mu, \sigma^2) \lt 0$):
+
+
+$$
+\begin{align*}
+\frac{\partial^2}{\partial\mu^2}\ell(\mu, \sigma^2) &= \frac{\partial}{\partial\mu} \left( \frac{\partial}{\partial\mu} \ell(\mu, \sigma^2) \right) = \frac{\partial}{\partial\mu} \left( \frac{1}{\sigma^2}\sum(\log y_i - \mu) \right) & \quad \text{usando (1)} \\
+&= \frac{1}{\sigma^2} \frac{\partial}{\partial\mu} \left( \sum(\log y_i - \mu) \right) & \quad \text{(2)} \\
+&= -\frac{n}{\sigma^2}\lt0 & \quad  n > 0 \text{ y } \sigma^2 > 0
+\end{align*}
+$$
+
+Por lo tanto, podemos afirmar a partir de (3) que:
+$$
+\begin{align*}
+\widehat{\mu}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \log y_{i} \quad\quad\quad (3) 
+\end{align*}
+$$
+
+Ahora, procedemos a derivar con respecto a $\sigma^2$ y a hallar el o los respectivos puntos críticos:
+
+$$
+\begin{align*}
+\frac{\partial}{\partial \sigma^2}\ell(\mu, \sigma^2) \bigg|_{\mu = \widehat{\mu}_{\text{MLE}}} &= -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 = 0 \\
+&= -\frac{n}{2\sigma^2} + \frac{1}{2\sigma^4} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 = 0 \\
+&\therefore \sigma^2 = \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \text{(4)}
+\end{align*}
+$$
+Procedemos a corroborar que, efectivamente, corresponde a un máximo. Esto, nuevamente, lo verificaremos por medio del criterio de la segunda derivada $\frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) \lt 0$.
+
+$$
+\begin{align*}
+\frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) &= \frac{n}{2(\sigma^2)^2} - \frac{1}{(\sigma^2)^3} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \quad (5)\\[10pt]
+\left. \frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) \right|_{\sigma^2 = \widehat{\sigma^2}_{\text{MLE}}} &= \frac{n}{2\left( \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \right)^2} - \frac{\sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2}{\left( \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \right)^3} \\[10pt]
+&= \frac{n^3}{2c^2} - \frac{n^3 c}{c^3} \quad \because c = \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \\[10pt]
+&= \frac{n^3}{c^2} \left( \frac{1}{2} - 1 \right) = -\frac{n^3}{2c^2} < 0 \quad \because n > 0, \, c > 0
+\end{align*}
+$$
+
+Por consiguiente, podemos afirmar a partir de (4) que:
+
+
+$$\sigma^2_{MLE} = \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \quad (6)$$
+
+2. Ahora, procedemos a mostrar que 
