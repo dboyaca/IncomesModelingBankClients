@@ -1,17 +1,20 @@
 ---
 title: "Parte práctica tercer exámen parcial"
-author: 
+author:
 - Diego Boyacá Fuquen
 - Email dboyaca@unal.edu.co
 - Diego Alejandro Pedraza
 - Email dpedraza@unal.edu.co
-output: html_document
-date: ""
+date: ''
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 
 ### Distribución de ingresos por género
 
@@ -74,8 +77,8 @@ ingresos_hombres <- creditos$ingresos[creditos$genero=="H"]
 ingresos_mujeres <- creditos$ingresos[creditos$genero=="M"]
 
 #numero de hombres y mujeres en el estudio
-(length(ingresos_hombres))
-(length(ingresos_mujeres))
+n_hombres = length(ingresos_hombres)
+n_mujeres = length(ingresos_mujeres)
 ```
 Se observa que el número de hombres y mujeres en el estudio es de 36311 y 25534 respectivamente.La suma de los dos anteriores valores es 61845, el cual corresponde efectivamente al número de registros una vez depurada la base de datos.
 
@@ -124,7 +127,7 @@ i = 1, \ldots , n
 $$
   donde $Y_{i}$ corresponde a los ingresos del i-ésimo individuo y n es el tamaño de la muestra. Dese cuenta que en este caso $Y_{i} \sim LogNormal(\mu, \sigma^2)$ significa que $log Y_{i} \sim Normal(\mu, \sigma^2)$, en donde $-\infty \lt \mu < \infty$ y $\sigma^2 \gt 0$ son los parámetros del modelo de los cuales se pretende hacer inferencia.
   
-1. En primera medida, mostraremos que los estimadores de máxima verosimilitud de \mu y \sigma^2 son:
+**1.** En primera medida, mostraremos que los estimadores de máxima verosimilitud de $\mu$ y $\sigma^2$ son:
 
 $$
 \widehat{\mu}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \log Y_{i} 
@@ -165,10 +168,10 @@ $$
 \begin{align*}
 \frac{1}{\sigma^2}\sum(\log y_i - \mu) &= 0 \\
 \sum\log y_i - n\mu = 0 \\
-\therefore \mu = \frac{\sum\log y_i}{n}
+\therefore \hat{\mu} = \frac{\sum\log y_i}{n}
 \end{align*}
 $$
-
+<!-- 
 Procedemos ahora, mediante el criterio de la segunda derivada , a verificar que este punto crítico corresponde a un máximo ($\frac{\partial^2}{\partial\mu^2}\ell(\mu, \sigma^2) \lt 0$):
 
 
@@ -187,16 +190,17 @@ $$
 \end{align*}
 $$
 
+--> 
 Ahora, procedemos a derivar con respecto a $\sigma^2$ y a hallar el o los respectivos puntos críticos:
-
 $$
 \begin{align*}
-\frac{\partial}{\partial \sigma^2}\ell(\mu, \sigma^2) \bigg|_{\mu = \widehat{\mu}_{\text{MLE}}} &= -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 = 0 \\
-&= -\frac{n}{2\sigma^2} + \frac{1}{2\sigma^4} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 = 0 \\
-&\therefore \sigma^2 = \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \text{(4)}
+\frac{\partial}{\partial \sigma^2}\ell(\mu, \sigma^2) \bigg|_{\mu = \widehat{\mu}} &= -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum (\log x_i - \widehat{\mu})^2 = 0 \\
+&= -\frac{n}{2\sigma^2} + \frac{1}{2\sigma^4} \sum (\log x_i - \widehat{\mu})^2 = 0 \\
+&\therefore \sigma^2 = \frac{1}{n} \sum (\log x_i - \widehat{\mu})^2 \quad \text{(4)}
 \end{align*}
 $$
-Procedemos a corroborar que, efectivamente, corresponde a un máximo. Esto, nuevamente, lo verificaremos por medio del criterio de la segunda derivada $\frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) \lt 0$.
+
+<!--Procedemos a corroborar que, efectivamente, corresponde a un máximo. Esto, nuevamente, lo verificaremos por medio del criterio de la segunda derivada $\frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) \lt 0$.
 
 $$
 \begin{align*}
@@ -211,5 +215,187 @@ Por consiguiente, podemos afirmar a partir de (4) que:
 
 
 $$\sigma^2_{MLE} = \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \quad (6)$$
+-->
 
-2. Ahora, procedemos a mostrar que 
+Por lo tanto, $(\mu, \sigma^2) = (\frac{1}{n}\sum \log y_i, \frac{1}{n} \sum (\log x_i - \widehat{\mu})^2)$ corresponde a un punto crítico. Ahora veremos que, efectivamente, este punto corresponde a un máximo local, haciendo uso de la matriz Hessiana de $\ell(\mu, \sigma^2)$ que es:
+
+
+$$
+\mathbf{H} = 
+\begin{bmatrix}
+\frac{\partial^2\ell}{\partial\mu^2} & \frac{\partial^2\ell}{\partial\mu \, \partial\sigma^2} \\
+\frac{\partial^2\ell}{\partial\sigma^2 \, \partial\mu} & \frac{\partial^2\ell}{\partial(\sigma^2)^2} 
+\end{bmatrix}
+=
+\begin{bmatrix}
+-\frac{n}{\sigma^2} & -\frac{1}{(\sigma^2)^2} \sum (\log y_i - \mu) \\
+-\frac{1}{(\sigma^2)^2} \sum (\log y_i - \mu) & \frac{n}{2(\sigma^2)^2} - \frac{1}{(\sigma^2)^3} \sum (\log y_i - \mu)^2
+\end{bmatrix}
+$$
+
+Evaluando en el punto crítico $(\hat{\mu}, \hat{\sigma^2}) = (\frac{1}{n}\sum \log y_i, \frac{1}{n} \sum (\log x_i - \widehat{\mu})^2)$ se obtiene: 
+
+
+$$
+\mathbf{H}(\hat{\mu}, \hat{\sigma^2}) = 
+\begin{bmatrix}
+-\frac{n}{\hat{\sigma^2}} & 0 \\
+0 & -\frac{1}{(\hat{\sigma^2})^3} \sum (\log y_i - \hat{\mu})^2
+\end{bmatrix}
+= 
+\begin{bmatrix}
+-\frac{n}{\hat{\sigma^2}} & 0 \\
+0 & -\frac{n}{(\hat{\sigma^2})^2} 
+\end{bmatrix}
+\quad \because \quad \hat{\sigma^2}= \frac{\sum (\log y_i - \hat{\mu})^2}{n}
+$$
+
+
+Ahora bien, dado que
+
+$$
+[\mathbf{H}(\hat{\mu}, \hat{\sigma}^2)]_{1,1} = -\frac{n}{\hat{\sigma}^2} < 0 
+\quad \text{y} \quad 
+\det(\mathbf{H}(\hat{\mu}, \hat{\sigma}^2)) = \frac{n^2}{(\hat{\sigma}^2)^3} > 0 
+\quad \because \quad \hat{\sigma}^2 > 0.
+$$
+
+podemos afirmar, por el criterio de segunda derivada para funciones multivariadas, que efectivamente $(\hat{\mu}, \hat{\sigma^2})$. Por último, resta verificar que en la frontera, correspondiente a $\{(\mu,\sigma^2):-\infty<\mu<\infty\,,\,\sigma^2=0\}$, no se presentan máximos locales ni globales:
+
+$$
+\lim_{\sigma^2 \to 0^+} \ell(\mu, \sigma^2) = \left( -\frac{n}{2} \log(2\pi\sigma^2) - \frac{1}{2\sigma^2} \sum (\log y_i - \mu)^2 - \sum \log y_i \right) = -\infty
+$$
+
+Por lo tanto, queda demostrado que los MLE de $\mu$ y $\sigma^2$ son: 
+
+$$
+\widehat{\mu}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \log Y_{i} \quad ; \quad
+\widehat{\sigma^2}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} \left( \log Y_{i} - \widehat{\mu}_{\text{MLE}} \right)^2 \quad \quad \quad \quad (1)
+$$
+
+**2.** Ahora, procedemos a realizar la obtención de la información observada de Fisher la cual, en el caso particular de una distribución bi-paramétrica, está dada por una matriz diagonal.
+
+Recordando que una de las alternativas para obtener la información observada de Fisher está dada por la siguiente expresión:
+
+$$
+\hat{I_n} = -E\left(\frac{\partial^2}{\partial\boldsymbol{\theta}^2}\log\left(\prod_{i=1}^nf_Y(Y_i;\boldsymbol{\theta})\right)\right)\bigg|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta_{MLE}}}}=-E\left( \frac{\partial^2}{\partial\boldsymbol{\theta}^2} \ell(\boldsymbol{\theta}) \right)\bigg|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta_{MLE}}}}
+\quad  \because \boldsymbol{\theta}=(\mu, \sigma^2)\quad y \quad \hat{\boldsymbol{\theta_{MLE}}}=(\hat{\mu_{MLE}},\hat{\sigma^2_{MLE}})
+$$
+procedemos a calcularlas haciendo uso de las expresiones correspondientes. Para el caso de la primera componente de la matriz, la expresión a calcular es $\hat{I_n} = -E\left(\frac{\partial^2}{\partial\mu^2}\log\left(\prod_{i=1}^nf_Y(Y_i;\boldsymbol{\theta})\right)\right)$. Como la expresión interior al paréntesis ya se encuentra calculada en la ecuación (1a) ubicada en los Anexos, realizaremos el cálculo del valor esperado:
+
+$$
+\hat{I_n} = -E\left(\frac{\partial^2}{\partial\mu^2}\log\left(\prod_{i=1}^nf_Y(Y_i;\boldsymbol{\theta})\right)\right)\bigg|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta_{MLE}}}} = -E \left(-\frac{n}{\sigma^2}\right)\bigg|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta_{MLE}}}}=\frac{n}{\hat{\sigma^2_{MLE}}}
+$$
+De igual manera, se realiza el cálculo para la componente inferior derecha de la matriz, la cual corresponde a la expresión $-E\left(\frac{\partial^2}{\partial(\sigma^2)^2}\log\left(\prod_{i=1}^nf_Y(Y_i;\boldsymbol{\theta})\right)\right)$. Al igual que en el caso anterior, la expresión dentro del paréntesis se encuentra desarrollada en la ecuación (2a) ubicada en los anexos. De este modo, se encuentra que:
+
+$$
+\hat{I_n} =-E\left(\frac{\partial^2}{\partial(\sigma^2)^2}\log\left(\prod_{i=1}^nf_Y(Y_i;\boldsymbol{\theta})\right)\right)\bigg|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta_{MLE}}}} = \frac{n}{2(\hat{\sigma^2_{MLE}})^2}
+$$
+
+Así, la matriz correspondiente a la **información observada de Fisher** es:
+
+$$
+\mathbf{\hat{I}}_n = 
+\begin{bmatrix}
+\frac{n}{\hat{\sigma}^2_{\text{MLE}}} & 0 \\
+0 & \frac{n}{2(\hat{\sigma}^2_{\text{MLE}})^2}
+\end{bmatrix}
+$$
+y por lo tanto, la matriz de varianza-covarianza de los estimadores de máxima verosimilitud $\hat{\mu_{MLE}}$ y $\hat{\sigma^2}_{MLE}$ es:
+
+$$
+\mathbf{\hat{I}}_n = 
+\begin{bmatrix}
+\frac{\hat{\sigma^2_{MLE}}}{n} & 0 \\
+0 & \frac{2(\hat{\sigma^2_{MLE}})^2}{n} \\
+\end{bmatrix}
+$$
+
+**3. ** Dado que ya contamos con las expresiones para obtener una estimación puntual de los parámetros de la observación (ecuación (1)), procederemos a superponer a los histogramas presentados anteriormente, la curva correspondiente a la distribución que le hemos asignado.
+
+Teniendo en cuenta que los datos correspondientes a los ingresos de las mujeres y de los hombres se encuentran almacenados en las variables *ingresos_mujeres* e *ingresos_hombres* respectivamente, se procederá a realizar los cálculos necesarios con el fin de llegar a las estimaciones puntuales de cada uno de los parámetros para las curvas que modelan cada conjunto de datos. Un resumen de los parámetros se encuentra en la siguiente tabla:
+
+**hacer tabla de resumen de la realización de los estimadores puntuales**
+
+```{r}
+#arreglo de log ingresos_mujeres
+log_ingresos_mujeres = log(ingresos_mujeres)
+#arreglo de log ingresos_hombres
+log_ingresos_hombres = log(ingresos_hombres)
+
+#Calculamos mu_mle_mujeres y mu_mle_hombres 
+mu_mle_mujeres = (1.0/n_mujeres)*sum(log_ingresos_mujeres)
+mu_mle_hombres = (1.0/n_hombres)*sum(log_ingresos_hombres)
+
+(mu_mle_mujeres) 
+(mu_mle_hombres)
+
+```
+
+```{r}
+(sdlog_mle_mujeres <- sd(log_ingresos_mujeres))
+(sdlog_mle_hombres <- sd(log_ingresos_hombres))
+
+```
+
+```{r}
+#Procedemos ahora a calcular la estimación puntual de las varianzas para ambos modelos
+
+cumsum <- 0
+
+for (i in 1:n_mujeres) {
+  cumsum <- cumsum + (log_ingresos_mujeres[i]-mu_mle_mujeres)^2
+}
+s2_mujeres <- (1.0/n_mujeres)*cumsum
+(s2_mujeres)
+```
+
+
+```{r}
+cumsum <- 0
+
+for (i in 1:n_hombres) {
+  cumsum <- cumsum + (log_ingresos_hombres[i]-mu_mle_hombres)^2
+}
+s2_hombres <- (1.0/n_hombres)*cumsum
+(s2_hombres)
+
+```
+
+
+```{r}
+#visualización
+par(mfrow = c(1,2))
+hist(x = ingresos_mujeres, freq = F, col = "white", ylim = c(0, 0.25),xlab = "Ingresos mujeres (millones)", ylab = "Densidad", main = "")
+curve(expr = dlnorm(x, meanlog = mu_mle_mujeres, sdlog = sqrt(s2_mujeres)), col = 2, add = TRUE)
+
+
+hist(x = ingresos_hombres, freq = F, col = "white", ylim = c(0, 0.25), xlab = "Ingresos hombres (millones)", ylab = "Densidad", main = "")
+curve(expr = dlnorm(x, meanlog = mu_mle_hombres, sdlog = sqrt(s2_hombres)), col = 2, add = TRUE)
+
+
+```
+
+
+#### Anexos
+
+$$
+\begin{align*}
+\frac{\partial^2}{\partial\mu^2}\ell(\mu, \sigma^2) &= \frac{\partial}{\partial\mu} \left( \frac{\partial}{\partial\mu} \ell(\mu, \sigma^2) \right) = \frac{\partial}{\partial\mu} \left( \frac{1}{\sigma^2} \sum (\log y_i - \mu) \right)  \\
+&= \frac{1}{\sigma^2} \frac{\partial}{\partial\mu} \left( \sum (\log y_i - \mu) \right)  \\
+&= -\frac{n}{\sigma^2}  & (1a)
+\end{align*}
+$$
+
+
+
+$$
+\begin{align*}
+\frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) &= \frac{n}{2(\sigma^2)^2} - \frac{1}{(\sigma^2)^3} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \quad \quad (5)\\[10pt]
+\left. \frac{\partial^2}{\partial(\sigma^2)^2}\ell(\mu, \sigma^2) \right|_{\sigma^2 = \widehat{\sigma^2}_{\text{MLE}}} &= \frac{n}{2\left( \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \right)^2} - \frac{\sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2}{\left( \frac{1}{n} \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \right)^3} \\[10pt]
+&= \frac{n^3}{2c^2} - \frac{n^3 c}{c^3} \quad \because c = \sum (\log x_i - \widehat{\mu}_{\text{MLE}})^2 \\[10pt]
+&= \frac{n^3}{c^2} \left( \frac{1}{2} - 1 \right) = -\frac{n^3}{2c^2} < 0 \quad \because n > 0, \, c > 0 \\
+&= -\frac{n}{\hat{2\sigma^2}}
+\end{align*}
+$$
+
