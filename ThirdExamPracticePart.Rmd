@@ -304,7 +304,7 @@ $$
 y por lo tanto, la matriz de varianza-covarianza de los estimadores de máxima verosimilitud $\hat{\mu_{MLE}}$ y $\hat{\sigma^2}_{MLE}$ es:
 
 $$
-\mathbf{\hat{I}}_n = 
+\mathbf{\hat{I^{-1}}}_n = 
 \begin{bmatrix}
 \frac{\hat{\sigma^2_{MLE}}}{n} & 0 \\
 0 & \frac{2(\hat{\sigma^2_{MLE}})^2}{n} \\
@@ -436,7 +436,44 @@ IC <- EP + c(-1, 1)*ME
 
 ```
 
+5. Procederemos a emplear **Bootstrap**, un método general para hacer inferencia estadística ya que éste no se basa en ningún supuesto distribucional acerca de los datos. Adicionalmente, es de fácil entendimiento e implementación.
 
+Usando Bootstrap (con el método de los percentiles, el método empírico y el método Normal), calcular el intervalo de confianza para θH−θM con una confiabilidad del 95%.
+
+Renombramos la diferencia entre medias como $Y$.
+
+
+```{r}
+#Procedemos a establecer el número de remuestras que tomaremos de nuestra ahora población "creditos"
+M <- 1000
+#Inicializamos una matrix donde guardaremos los resultados, 1000x1
+yb_boot <- matrix(data = NA, nrow = M, ncol = 1)
+set.seed(08092024)
+for (i in 1:M) {
+  #Generamos la remuestra
+  #yr <- sample(x = creditos, size = nrow(creditos), replace = TRUE)
+    yr <- creditos[sample(1:nrow(creditos), size = nrow(creditos), replace = TRUE), ]
+  #Procedemos a realizar el cálculo de los vectores de ingresos de los hombres y mujeres de la remuestra
+  ingresos_hombres_boots <- yr$ingresos[yr$genero == "H"]
+  ingresos_mujeres_boots <- yr$ingresos[yr$genero == "M"]
+  
+  xb_hombres_boots <- mean(ingresos_hombres_boots)
+  xb_mujeres_boots <- mean(ingresos_mujeres_boots)
+  
+  
+  (yb_boot[i] <- xb_hombres_boots - xb_mujeres_boots)
+}
+
+```
+
+```{r}
+#Visualizamos los primeros datos de la distribución de la remuestra
+head(yb_boot,7)
+```
+
+```{r}
+nrow(yb_boot)
+```
 
 #### Anexos
 
