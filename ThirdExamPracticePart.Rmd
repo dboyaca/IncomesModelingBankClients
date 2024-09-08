@@ -331,12 +331,14 @@ mu_mle_hombres = (1.0/n_hombres)*sum(log_ingresos_hombres)
 (mu_mle_hombres)
 
 ```
-
+<!--
 ```{r}
 (sdlog_mle_mujeres <- sd(log_ingresos_mujeres))
 (sdlog_mle_hombres <- sd(log_ingresos_hombres))
+sd
 
 ```
+-->
 
 ```{r}
 #Procedemos ahora a calcular la estimación puntual de las varianzas para ambos modelos
@@ -375,6 +377,65 @@ curve(expr = dlnorm(x, meanlog = mu_mle_hombres, sdlog = sqrt(s2_hombres)), col 
 
 
 ```
+
+**4. ** En este contexto es posible hacer uso del Teorema del Límite Central (TLC) para hacer inferencia sobre $\theta^H-\theta^M$. La diferencia radica en que ahora no es necesario asumir un modelo probabilístico para cada grupo. En cambio, se estima el ingreso promedio $\theta$ en cada grupo utilizando la media muestral $\bar{Y}$, y se explota hecho que, gracias al TLC, $\bar{Y}$ tiene distribución aproximadamente Normal con media $E(\bar{Y})=\theta$ y $\hat{Var(\bar{Y})= \frac{s}{\sqrt n}}$, donde $s = \sqrt{ \frac{1}{n-1}\sum_{i=1}^n(y_i-\bar{y})^2}$ es la desviación muestral de los ingresos y n es el tamaño de la muestra correspondiente. Dado que los tamaños de muestra son suficientemente grandes, es posible usar TLC.
+
+Sean $X_{i}^H$ los ingresos del i-ésimo hombre y sea $X_{i}^M$ los ingresos de la i-ésima mujer, dos poblaciones independientes. Dado que $\bar{X}^H \sim Normal(\theta^H, {\sigma^2}^H)$ y $\bar{X}^M \sim Normal(\theta^M, {\sigma^2}^M)$, haremos uso del TLC para estimar $\theta^H-\theta^M$. La variable aleatoria pivote está dada por:
+
+$$
+Z=\frac{(\bar{X}^H-\bar{X}^M) - (\mu_{X^H}-\mu_{X^M})} {\sqrt{\frac{\sigma_{X^H}^2}{n_X}+\frac{\sigma_{X^M}^2}{n_Y}}}\sim \textsf{N}(0,1)\
+$$
+
+donde $\bar{X^H}=\frac{1}{n_{X^H}}\sum_{i=1}^{n_X^H} X_i^H$ y $\bar{X^M}=\frac{1}{n_{X^M}}\sum_{i=1}^{n_X^M} X_i^M$ son las **medias muestrales** y $n_{X^H}$ junto con $n_{X^M}$, representan los tamaños de muestra correspondientes.
+
+
+Dado que con el TLC la varianza estimada de $\bar{X}$ es $\frac{S^2}{n}$, la cantidad pivotal toma la forma:
+
+$$
+Z=\frac{(\bar{X}^H-\bar{X}^M) - (\mu_{X^H}-\mu_{X^M})}{\sqrt{\frac{S_{X^H}^2}{n_{X^H}}+\frac{S_{X^M}^2}{n_{X^M}}}}\sim \textsf{N}(0,1)\,
+$$
+
+A partir de esta cantidad pivotal, podemos construir un intervalo de confianza de $100(1-\alpha)\%$ como sigue:
+
+$$
+\textsf{P}\left( (\bar{X}^H-\bar{X}^M)-\textsf{z}_{1-\alpha/2}\sqrt{\frac{S_{X^H}^2}{n_{X^H}}+\frac{S_{X^M}^2}{n_{X^M}}} <\mu_{X^H}-\mu_{X^M}< (\bar{X}^H-\bar{X}^M) + \textsf{z}_{1-\alpha/2}\sqrt{\frac{S_{X^H}^2}{n_{X^H}}+\frac{S_{X^M}^2}{n_{X^M}}} \right) = 1-\alpha\,,
+$$
+
+De esta forma, al ser la función distribución simétrica, podemos afirmar que el intervalo de confianza al $100(1-\alpha)\%$ tiene la forma:
+
+$$
+IC_{100(1-\alpha)\%}(\mu_{X^H}-\mu_{X^M})= (\bar{X}^H-\bar{X}^M) \pm \textsf{z}_{1-\alpha/2}\sqrt{\frac{S_{X^H}^2}{n_{X^H}}+\frac{S_{X^M}^2}{n_{X^M}}}
+$$
+
+Para el caso particular de un intervalo al 95% de confianza, la expresión se reduce a:
+
+$$
+IC_{100(1-\alpha)\%}(\mu_{X^H}-\mu_{X^M})= (\bar{X}^H-\bar{X}^M) \pm 1.96\sqrt{\frac{S_{X^H}^2}{n_{X^H}}+\frac{S_{X^M}^2}{n_{X^M}}}
+$$
+
+De esta manera, procederemos a realizar el cálculo correspondiente para las poblaciones de nuestro interés, lo cual nos da como resultado:
+
+$$
+IC_{95\%}(\mu_{X^H}-\mu_{X^M}) = 0.32  \pm 0.07= (0.25, 0.39)
+$$
+
+Como resultado se puede afirmar que, con una confiabilidad del 95%, el promedio poblacional de los ingresos de los hombres es significativamente superior al promedio poblacional de los ingresos de las mujeres.
+
+```{r}
+#Estimación puntual
+EP <- mean(ingresos_hombres)-mean(ingresos_mujeres)
+#Margen de error
+b = qnorm(0.975)
+s2_xH= var(ingresos_hombres)
+s2_xM= var(ingresos_mujeres)
+ME = b * sqrt((s2_xH/n_hombres)+(s2_xM/n_mujeres))
+(EP)
+(ME)
+IC <- EP + c(-1, 1)*ME
+(IC)
+
+```
+
 
 
 #### Anexos
